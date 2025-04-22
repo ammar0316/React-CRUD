@@ -1,24 +1,11 @@
 
-
-// export default Cards;
 import React, { useEffect, useState } from "react";
-import { db, collection,
-  getDocs,
-  doc,
-  deleteDoc,
-  updateDoc, } from "../../firebase-Config";
-
+import { db, collection, getDocs } from "../../firebase-Config";
 
 const Cards = () => {
   const [data, setData] = useState([]);
-  const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  const [updatedData, setUpdatedData] = useState({
-    title: "",
-    description: "",
-    image: "",
-  });
+  const [showAll, setShowAll] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -28,7 +15,7 @@ const Cards = () => {
         ...doc.data(),
       }));
       setData(items);
-      setLoading(false); // stop loading when done
+      setLoading(false);
     } catch (error) {
       console.error("Error fetching data: ", error);
     }
@@ -38,145 +25,87 @@ const Cards = () => {
     fetchData();
   }, []);
 
-  const handleDelete = async (id) => {
-    try {
-      await deleteDoc(doc(db, "React", id));
-      setData((prev) => prev.filter((item) => item.id !== id));
-    } catch (error) {
-      console.error("Error deleting document: ", error);
-    }
-  };
-
-  const handleUpdateClick = (item) => {
-    setEditingId(item.id);
-    setUpdatedData({
-      title: item.title,
-      description: item.description,
-      image: item.image,
-    });
-  };
-
-  const handleUpdateSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const itemRef = doc(db, "React", editingId);
-      await updateDoc(itemRef, {
-        title: updatedData.title,
-        description: updatedData.description,
-        image: updatedData.image,
-      });
-      setData((prev) =>
-        prev.map((item) =>
-          item.id === editingId
-            ? {
-                ...item,
-                title: updatedData.title,
-                description: updatedData.description,
-                image: updatedData.image,
-              }
-            : item
-        )
-      );
-      setEditingId(null);
-    } catch (error) {
-      console.error("Error updating document: ", error);
-    }
-  };
+  const visibleData = showAll ? data : data.slice(0, 8);
 
   return (
     <>
+      {/* Hero Section */}
+      <section id="hidee" className="relative overflow-hidden bg-gradient-to-r from-[#4f46e5] via-[#7c3aed] to-[#9333ea] text-white py-24 px-6">
+        <div className="absolute -top-16 -left-16 w-96 h-96 bg-purple-400 opacity-30 rounded-full filter blur-3xl"></div>
+        <div className="absolute -bottom-16 -right-16 w-96 h-96 bg-indigo-400 opacity-30 rounded-full filter blur-3xl"></div>
+        <div className="relative z-10 text-center max-w-3xl mx-auto">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight tracking-tight">
+            Transforming Ideas into Reality
+          </h1>
+          <p className="mt-6 text-lg sm:text-xl text-white/90">
+            Explore our portfolio of innovative and beautifully crafted web projects,
+            where creativity meets functionality.
+          </p>
+          <div className="mt-8 flex justify-center gap-4">
+            <button className="bg-white text-indigo-700 font-semibold px-6 py-3 rounded-full shadow-lg hover:bg-gray-100 transition">
+              View Projects
+            </button>
+            <button className="bg-transparent border border-white px-6 py-3 rounded-full hover:bg-white hover:text-purple-700 transition">
+              Learn More
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Card Section */}
       {loading ? (
-        // Loader shown while loading is true
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
           {[1, 2, 3].map((n) => (
             <div
               key={n}
-              className="border p-4 rounded shadow-md bg-white h-[410px] flex justify-center items-center"
+              className="border p-4 rounded shadow-md bg-white h-[300px] flex justify-center items-center"
             >
               <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
           ))}
         </div>
       ) : (
-        // Actual cards shown when loading is false
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 ">
-          {data.map((item) => (
-            <div
-              key={item.id}
-              className="border p-4 rounded shadow-lg/45 bg-white relative h-[410px] overflow-hidden"
-            >
-              <img
-                src={item.image}
-                alt={item.title}
-                className="w-full h-48 object-cover rounded"
-              />
-              <h2 className="text-xl font-bold mt-2">{item.title}</h2>
-  
-              <p className="text-gray-700 overflow-y-auto scrollbar-hide max-h-[100px] pr-2">
-                {item.description}
-              </p>
-  
-              <div className="mt-4 flex justify-between">
-                <button
-                  onClick={() => handleUpdateClick(item)}
-                  className="bg-yellow-500 text-white px-3 py-1 rounded"
-                >
-                  Update
-                </button>
-                <button
-                  onClick={() => handleDelete(item.id)}
-                  className="bg-red-500 text-white px-3 py-1 rounded"
-                >
-                  Delete
-                </button>
-              </div>
-  
-              {editingId === item.id && (
-                <form onSubmit={handleUpdateSubmit} className="mt-4">
-                  <input
-                    type="text"
-                    value={updatedData.title}
-                    onChange={(e) =>
-                      setUpdatedData({ ...updatedData, title: e.target.value })
-                    }
-                    className="block w-full mb-2 p-2 border rounded"
-                    placeholder="Update title"
-                  />
-                  <textarea
-                    value={updatedData.description}
-                    onChange={(e) =>
-                      setUpdatedData({
-                        ...updatedData,
-                        description: e.target.value,
-                      })
-                    }
-                    className="block w-full mb-2 p-2 border rounded"
-                    placeholder="Update description"
-                  ></textarea>
-                  <input
-                    type="text"
-                    value={updatedData.image}
-                    onChange={(e) =>
-                      setUpdatedData({ ...updatedData, image: e.target.value })
-                    }
-                    className="block w-full mb-2 p-2 border rounded"
-                    placeholder="Update image URL"
-                  />
-                  <button
-                    type="submit"
-                    className="bg-green-500 text-white px-4 py-1 rounded"
-                  >
-                    Save
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-8 max-w-7xl mx-auto">
+            {visibleData.map((item) => (
+              <div
+                key={item.id}
+                className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col h-[300px]"
+              >
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className="w-full h-32 object-cover"
+                />
+                <div className="p-4 flex flex-col flex-grow">
+                  <h2 className="text-lg font-semibold text-indigo-700 mb-1">{item.title.toUpperCase()}</h2>
+                  <p className="text-gray-600 text-sm mb-2 overflow-hidden line-clamp-2">
+                    {item.description}
+                  </p>
+                  <h3 className="text-md font-bold text-green-600 mb-2">Price: ${item.price}</h3>
+                  <button className="text-center    w-[100px] relative left-40 bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 transition">
+                    Buy Now
                   </button>
-                </form>
-              )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* See More / Show Less */}
+          {data.length > 8 && (
+            <div className="text-right px-8 pb-12">
+              <button
+                onClick={() => setShowAll(!showAll)}
+                className="bg-indigo-600 text-white px-6 py-2 rounded-full hover:bg-indigo-700 transition duration-200"
+              >
+                {showAll ? "Show Less" : "See More"}
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </>
   );
-}
-  
+};
 
 export default Cards;
